@@ -1,0 +1,642 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PAYPAL Wallet</title>
+
+  <script src="assets/js/html2pdf.bundle.min.js?v=2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: #eef2f7;
+      color: #1b2430;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .start,
+    .loader {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+    }
+
+    .start {
+      z-index: 9999;
+    }
+
+    .start img {
+      width: 160px;
+      margin-bottom: 20px;
+    }
+
+    .spinner {
+      width: 70px;
+      height: 70px;
+      border: 6px solid #eee;
+      border-top-color: #0070ba;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 18px 22px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #003087;
+      background: #fff;
+    }
+
+    .header span {
+      cursor: pointer;
+    }
+
+    .container {
+      max-width: 560px;
+      margin: 40px auto;
+    }
+
+    .box {
+      padding: 28px;
+      margin-bottom: 30px;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+    }
+
+    .box-light {
+      background: #f7f9fc;
+    }
+
+    .title {
+      margin-bottom: 15px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #003087;
+    }
+
+    .big {
+      margin: 18px 0;
+      font-size: 40px;
+      font-weight: 800;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 12px 0;
+      font-size: 16px;
+    }
+
+    .green {
+      display: inline-block;
+      padding: 6px 14px;
+      color: #0a8f5a;
+      font-size: 13px;
+      background: #d4f5e9;
+      border-radius: 15px;
+    }
+
+    .red {
+      color: #d93025;
+      font-weight: 800;
+    }
+
+    .btn {
+      padding: 16px;
+      border: 0;
+      border-radius: 30px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .primary {
+      color: #fff;
+      background: #0070ba;
+    }
+
+    .secondary {
+      color: #0070ba;
+      background: #fff;
+      border: 2px solid #0070ba;
+    }
+
+    .full {
+      width: 100%;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+    }
+
+    .modal-box {
+      width: 92%;
+      max-width: 460px;
+      padding: 30px;
+      text-align: center;
+      background: #fff;
+      border-radius: 25px;
+    }
+
+    .modal-box h2 {
+      color: #00457c;
+    }
+
+    .review-details {
+      padding: 20px;
+      text-align: left;
+      border-radius: 15px;
+    }
+
+    .hotline {
+      padding: 40px 20px;
+      margin: 40px 0;
+      text-align: center;
+      background: #fff;
+      border: 2px dashed #d93025;
+      border-radius: 20px;
+    }
+
+    .hotline-number {
+      margin-top: 12px;
+      color: #0070ba;
+      font-size: 22px;
+    }
+
+    .mt-10 {
+      margin-top: 10px;
+    }
+
+    .mt-15 {
+      margin-top: 15px;
+    }
+
+    body.pdf-exporting {
+      background: #fff;
+    }
+
+    body.pdf-exporting .start,
+    body.pdf-exporting .loader,
+    body.pdf-exporting .header,
+    body.pdf-exporting main {
+      display: none !important;
+    }
+
+    .pdf-export-page {
+      width: 190mm;
+      min-height: 277mm;
+      margin: 0;
+      padding: 0;
+      color: #1b2430;
+      font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: #fff;
+    }
+
+    .pdf-export-page .no-pdf {
+      display: none !important;
+    }
+
+    .pdf-export-page .box {
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      border: 1px solid #d9e1ec;
+      border-radius: 8px;
+      box-shadow: none;
+    }
+
+    .pdf-export-page .box p {
+      margin: 5px 0;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .pdf-export-page .title {
+      margin-bottom: 6px;
+      font-size: 15px;
+    }
+
+    .pdf-export-page .big {
+      margin: 6px 0;
+      font-size: 27px;
+    }
+
+    .pdf-export-page .green {
+      padding: 5px 10px;
+      font-size: 11px;
+      border-radius: 10px;
+    }
+
+    .pdf-export-page .row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: start;
+      gap: 18px;
+      margin: 4px 0;
+      font-size: 11.5px;
+      line-height: 1.25;
+    }
+
+    .pdf-export-page .hotline {
+      padding: 10px 14px;
+      margin: 0 0 8px;
+      border-radius: 8px;
+    }
+
+    .pdf-export-page .hotline-number {
+      margin-top: 5px;
+      font-size: 15px;
+    }
+
+    @page {
+      size: A4;
+      margin: 10mm;
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .header,
+      .no-pdf,
+      .start,
+      .loader,
+      .modal {
+        display: none !important;
+      }
+
+      .container,
+      #page2 {
+        display: block !important;
+        width: 100%;
+        max-width: none;
+        margin: 0;
+      }
+
+      #pdfArea {
+        width: 190mm;
+        margin: 0 auto;
+      }
+
+      .box {
+        padding: 12px 16px;
+        margin-bottom: 10px;
+        border: 1px solid #d9e1ec;
+        border-radius: 8px;
+        box-shadow: none;
+        break-inside: avoid;
+      }
+
+      .big {
+        margin: 8px 0;
+        font-size: 30px;
+      }
+
+      .row {
+        margin: 6px 0;
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="start" id="start">
+    <img src="assets/img/pp258.png" alt="PAYPAL logo">
+    <div class="spinner"></div>
+    <p id="status">Securing Connection...</p>
+  </div>
+
+  <div class="loader hidden" id="loader">
+    <div class="spinner"></div>
+    <p>This is your online secure wallet connected with secure server</p>
+  </div>
+
+  <header class="header hidden" id="header">
+    <div>PAYPAL WALLET</div>
+    <div>
+      <span id="activityBtn">ACTIVITY</span> |
+      <span id="helpBtn">HELP</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="modal hidden" id="modal">
+      <div class="modal-box">
+        <h2>PAYPAL-SERVICED</h2>
+        <h2>Manual Review Required</h2>
+
+        <p>Disbursement of <span class="red" id="mAmt"></span> placed on hold</p>
+
+        <div class="box-light review-details">
+          <div><b>LOG STATUS:</b> <span class="red">Pending Review</span></div><br>
+          <div><b>REFERENCE:</b> <span id="ref"></span></div><br>
+          <div><b>DATE:</b> <span id="date"></span></div><br>
+          <div><b>USER AGENT IP:</b> <span id="ip"></span></div><br>
+          <div><b>LOCATION:</b> San Jose, US / Sync Active</div><br>
+          <div><b>ACTION:</b> Contact Support in 12 Hours</div>
+        </div>
+
+        <button class="btn primary full mt-15" id="modalCallBtn">
+          CALL SUPPORT: +1 (818) 293-7519
+        </button>
+
+        <button class="btn secondary full mt-15" id="openFullBtn">
+          See Full Transaction
+        </button>
+      </div>
+    </section>
+
+    <section class="container hidden" id="page2">
+      <div id="pdfArea">
+        <div class="box">
+          <div class="title">Global Merchant Coinbase-Connect</div>
+          <p>111 W 33rd St, New York, NY 10121</p>
+          <div class="big" id="amt"></div>
+          <div class="green">VERIFIED TRANSACTION COMPLETE</div>
+        </div>
+
+        <div class="box hotline">
+          <p class="red">24/7 SUPPORT LINE FOR YOUR SERVICE</p>
+          <div class="hotline-number" id="phone">+1 (818) 293-7519</div>
+
+          <button class="btn primary full no-pdf mt-15" id="pageCallBtn">
+            CALL NOW: +1 (818) 293-7519
+          </button>
+
+          <p>Need Assistance Contact Security Support Immediately</p>
+        </div>
+
+        <div class="box box-light">
+          <div class="title">Transaction Details</div>
+          <div class="row"><span>Reference</span><span id="ref2"></span></div>
+          <div class="row"><span>Invoice</span><span id="inv"></span></div>
+          <div class="row"><span>Date</span><span id="date2"></span></div>
+          <div class="row"><span>Service Category</span><span>Cloud Infrastructure</span></div>
+          <div class="row"><span>Purchase Item</span><span>Enterprise License v4.3</span></div>
+          <div class="row"><span>Gateway IP</span><span id="ip2"></span></div>
+        </div>
+
+        <div class="box">
+          <div class="title">Recent Transactions</div>
+          <div id="ledger"></div>
+        </div>
+
+        <div class="box no-pdf">
+          <button class="btn secondary full" id="downloadBtn">Download PDF</button>
+          <button class="btn primary full mt-10" id="backBtn">Back</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const phoneNumber = "+1 (818) 293-7519";
+    const stores = [
+      { name: "Norton LifeLock Total Protection", amount: 450.00 },
+      { name: "Walmart", amount: 80.00 },
+      { name: "Walmart", amount: 48.50 },
+      { name: "FedEx", amount: 125. },
+      { name: "Target", amount: 87.20 },
+      { name: "Amazon", amount: 83.75 },
+      { name: "BestBuy", amount: 56.50 },
+      { name: "Amazon", amount: 45.00 }
+    ];
+
+    const pdfOptions = {
+      margin: [10, 10, 10, 10],
+      filename: "PAYPAL-transaction.pdf",
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: 900
+      },
+      jsPDF: {
+        unit: "mm",
+        format: "a4",
+        orientation: "portrait"
+      },
+      pagebreak: {
+        mode: ["avoid-all", "css", "legacy"]
+      }
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const randomFloat = (min, max) => Math.random() * (max - min) + min;
+    const randomInt = (min, max) => Math.floor(randomFloat(min, max));
+
+    function callSupport() {
+      window.location.href = "tel:" + phoneNumber;
+    }
+
+    function openFull() {
+      $("modal").style.display = "none";
+      $("page2").classList.remove("hidden");
+    }
+
+    function goBack() {
+      $("page2").classList.add("hidden");
+      $("modal").style.display = "flex";
+    }
+
+    function formatDate() {
+      const date = new Date();
+      return [
+        date.getFullYear(),
+        date.getMonth() + 1,
+        date.getDate()
+      ].join("-") + " " + [
+        date.getHours(),
+        date.getMinutes(),
+        date.getSeconds()
+      ].join(":");
+    }
+
+    function randomIP() {
+      return [
+        randomInt(1, 255),
+        randomInt(1, 255),
+        randomInt(1, 255),
+        randomInt(1, 255)
+      ].join(".");
+    }
+
+    function animateAmount(element, amount) {
+      const duration = 700;
+      let startTime = null;
+
+      function step(timestamp) {
+        if (!startTime) startTime = timestamp;
+
+        const progress = Math.min((timestamp - startTime) / duration, 1);
+        element.innerText = "-$" + (amount * progress).toFixed(2);
+
+        if (progress < 1) {
+          requestAnimationFrame(step);
+        }
+      }
+
+      requestAnimationFrame(step);
+    }
+
+    function fillTransactionData() {
+      const amount = 450;
+      const reference = "REF-" + Math.random().toString(36).slice(2, 10).toUpperCase();
+      const ip = randomIP();
+      const date = formatDate();
+
+      animateAmount($("amt"), amount);
+      animateAmount($("mAmt"), amount);
+
+      $("ref").innerText = reference;
+      $("ref2").innerText = reference;
+      $("inv").innerText = "INV-" + randomInt(100000, 999999);
+      $("ip").innerText = ip;
+      $("ip2").innerText = ip;
+      $("date").innerText = date;
+      $("date2").innerText = date;
+
+      $("ledger").innerHTML = stores.map((store) => {
+        return `<div class="row"><span>${store.name}</span><span>-$${store.amount.toFixed(2)}</span></div>`;
+      }).join("");
+    }
+
+    function downloadPDF() {
+      const downloadBtn = $("downloadBtn");
+
+      if (typeof html2pdf !== "function") {
+        showDownloadError("PDF library is not loaded.");
+        return;
+      }
+
+      const pdfPage = createPdfPage();
+      document.body.classList.add("pdf-exporting");
+
+      downloadBtn.disabled = true;
+      downloadBtn.innerText = "Downloading...";
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => savePdf(pdfPage));
+      });
+    }
+
+    function createPdfPage() {
+      removePdfPage();
+
+      const page = $("pdfArea").cloneNode(true);
+      page.id = "pdfExportPage";
+      page.className = "pdf-export-page";
+      page.querySelectorAll(".no-pdf").forEach((element) => element.remove());
+      document.body.appendChild(page);
+
+      return page;
+    }
+
+    function savePdf(pdfPage) {
+      try {
+        html2pdf()
+          .set(pdfOptions)
+          .from(pdfPage)
+          .save()
+          .then(resetDownloadButton)
+          .catch(showDownloadError);
+      } catch (error) {
+        showDownloadError(error);
+      }
+    }
+
+    function resetDownloadButton() {
+      removePdfPage();
+      $("downloadBtn").disabled = false;
+      $("downloadBtn").innerText = "Download PDF";
+      document.body.classList.remove("pdf-exporting");
+    }
+
+    function showDownloadError(error) {
+      console.error("PDF download failed:", error);
+      const pdfPage = $("pdfExportPage");
+      if (pdfPage) {
+        console.error("PDF sheet size:", {
+          width: pdfPage.offsetWidth,
+          height: pdfPage.offsetHeight,
+          text: pdfPage.innerText.trim().slice(0, 120)
+        });
+      }
+
+      removePdfPage();
+      $("downloadBtn").disabled = false;
+      $("downloadBtn").innerText = "Try Again";
+      document.body.classList.remove("pdf-exporting");
+    }
+
+    function removePdfPage() {
+      const pdfPage = $("pdfExportPage");
+
+      if (pdfPage) {
+        pdfPage.remove();
+      }
+    }
+
+    function startApp() {
+      setTimeout(() => $("status").innerText = "Authorizing...", 1500);
+      setTimeout(() => $("status").innerText = "Authorization Complete", 3000);
+
+      setTimeout(() => {
+        $("start").style.display = "none";
+        $("loader").classList.remove("hidden");
+
+        setTimeout(() => {
+          $("loader").style.display = "none";
+          $("header").classList.remove("hidden");
+          $("modal").classList.remove("hidden");
+          fillTransactionData();
+        }, 1500);
+      }, 4000);
+    }
+
+    $("activityBtn").addEventListener("click", goBack);
+    $("helpBtn").addEventListener("click", callSupport);
+    $("modalCallBtn").addEventListener("click", callSupport);
+    $("pageCallBtn").addEventListener("click", callSupport);
+    $("openFullBtn").addEventListener("click", openFull);
+    $("downloadBtn").addEventListener("click", downloadPDF);
+    $("backBtn").addEventListener("click", goBack);
+
+    startApp();
+  </script>
+</body>
+</html>
